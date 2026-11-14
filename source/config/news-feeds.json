@@ -1,0 +1,16 @@
+[
+  {
+    "name": "Daryo",
+    "https_url": "https://daryo.uz/rss/",
+    "topic": "Umumiy",
+    "region": "O‘zbekiston",
+    "language": "uz"
+  },
+  {
+    "name": "O‘zbekiston Milliy axborot agentligi",
+    "https_url": "https://uza.uz/oz/rss",
+    "topic": "Umumiy",
+    "region": "O‘zbekiston",
+    "language": "uz"
+  }
+]

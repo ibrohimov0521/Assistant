@@ -1,0 +1,236 @@
+services:
+  bot:
+    build: ./source
+    image: personal-telegram-assistant:openai-only-20261114
+    command: ["python", "-m", "app.bot.main"]
+    init: true
+    user: "10001:10001"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777
+    environment:
+      BOT_TOKEN_FILE: /run/secrets/bot_token
+      OWNER_TELEGRAM_ID: ${OWNER_TELEGRAM_ID:-}
+      OWNER_CHAT_ID: ${OWNER_CHAT_ID:-}
+      DATA_KEY_FILE: /run/secrets/data_key
+      INTERNAL_TOKEN_FILE: /run/secrets/internal_token
+      ENABLE_OPENAI: '1'
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      GOOGLE_ACCESS_TOKEN: ${GOOGLE_ACCESS_TOKEN:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REFRESH_TOKEN: ${GOOGLE_REFRESH_TOKEN:-}
+      HOME_ASSISTANT_URL: ${HOME_ASSISTANT_URL:-}
+      HOME_ASSISTANT_TOKEN: ${HOME_ASSISTANT_TOKEN:-}
+      MAPS_PROVIDER: ${MAPS_PROVIDER:-google}
+      MAPS_API_KEY: ${MAPS_API_KEY:-}
+      NOTION_TOKEN: ${NOTION_TOKEN:-}
+      NOTION_DATABASE_ID: ${NOTION_DATABASE_ID:-}
+      TRELLO_KEY: ${TRELLO_KEY:-}
+      TRELLO_TOKEN: ${TRELLO_TOKEN:-}
+      HUBSPOT_TOKEN: ${HUBSPOT_TOKEN:-}
+      ODOO_URL: ${ODOO_URL:-}
+      ODOO_DATABASE: ${ODOO_DATABASE:-}
+      ODOO_USERNAME: ${ODOO_USERNAME:-}
+      ODOO_API_KEY: ${ODOO_API_KEY:-}
+      DOKPLOY_URL: ${DOKPLOY_URL:-}
+      DOKPLOY_API_KEY: ${DOKPLOY_API_KEY:-}
+      DOKPLOY_ALLOWED_PROJECTS: ${DOKPLOY_ALLOWED_PROJECTS:-}
+      META_GRAPH_TOKEN: ${META_GRAPH_TOKEN:-}
+      META_PAGE_ID: ${META_PAGE_ID:-}
+      META_GRAPH_API_VERSION: ${META_GRAPH_API_VERSION:-v26.0}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-6-luna}
+      OPENAI_TIMEOUT_SECONDS: ${OPENAI_TIMEOUT_SECONDS:-40}
+      ENABLE_REALTIME_VOICE: ${ENABLE_REALTIME_VOICE:-0}
+      REALTIME_VOICE_APP_URL: ${REALTIME_VOICE_APP_URL:-}
+      REALTIME_VOICE_MODEL: ${REALTIME_VOICE_MODEL:-gpt-realtime-2.1-mini}
+      REALTIME_VOICE_OUTPUT: ${REALTIME_VOICE_OUTPUT:-marin}
+      REALTIME_VOICE_MAX_SECONDS: ${REALTIME_VOICE_MAX_SECONDS:-300}
+      REALTIME_VOICE_SESSIONS_PER_HOUR: ${REALTIME_VOICE_SESSIONS_PER_HOUR:-3}
+      MODEL_DAILY_REQUESTS: ${MODEL_DAILY_REQUESTS:-120}
+      MODEL_DAILY_TOKENS: ${MODEL_DAILY_TOKENS:-500000}
+      MODEL_INPUT_USD_PER_MILLION_TOKENS: ${MODEL_INPUT_USD_PER_MILLION_TOKENS:-0.10}
+      MODEL_OUTPUT_USD_PER_MILLION_TOKENS: ${MODEL_OUTPUT_USD_PER_MILLION_TOKENS:-0.50}
+      MODEL_PRICING_AS_OF: ${MODEL_PRICING_AS_OF:-2026-11-11}
+      MODEL_DAILY_BUDGET_USD: ${MODEL_DAILY_BUDGET_USD:-0.25}
+      MODEL_COST_ALERT_PERCENT: ${MODEL_COST_ALERT_PERCENT:-80}
+      ENABLE_PROFILE_EXECUTOR: ${ENABLE_PROFILE_EXECUTOR:-0}
+      ENABLE_PROFILE_READER: ${ENABLE_PROFILE_READER:-0}
+      EXPECTED_PROFILE_ID: ${EXPECTED_PROFILE_ID:-}
+      ENABLE_STT: '1'
+      STT_MAX_FILE_BYTES: ${STT_MAX_FILE_BYTES:-8388608}
+      STT_MAX_SECONDS: ${STT_MAX_SECONDS:-300}
+      STT_TIMEOUT_SECONDS: ${STT_TIMEOUT_SECONDS:-45}
+      ENABLE_TTS: '1'
+      OPENAI_TTS_MODEL: gpt-realtime-2.1-mini
+      OPENAI_TTS_VOICE: marin
+      DATABASE_PATH: /data/assistant.sqlite3
+      ASSISTANT_WORKSPACE: ${ASSISTANT_WORKSPACE:-/data/assistant-workspace}
+      MEDIA_TEMP_DIR: /tmp/assistant-media
+      TZ: ${TZ:-Asia/Tashkent}
+      NEWS_FEEDS_FILE: /run/config/news-feeds.json
+      WEATHER_CITY: ${WEATHER_CITY:-Toshkent}
+      REPORT_TIME: ${REPORT_TIME:-}
+      CONTACTS_FILE: /run/config/contacts.enc
+      PROFILE_API_BASE: http://bot:8080
+      PROFILE_MANAGEMENT_API_BASE: http://executor:8081
+      PROFILE_LEASE_SECONDS: ${PROFILE_LEASE_SECONDS:-30}
+      GLOBAL_SENDS_PER_HOUR: ${GLOBAL_SENDS_PER_HOUR:-30}
+      PROFILE_SENDS_PER_HOUR: ${PROFILE_SENDS_PER_HOUR:-5}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SERVER_AGENT_URL: ${SERVER_AGENT_URL:-http://server-agent:8090}
+    volumes:
+      - assistant_data:/data
+      - ./secrets/bot_token:/run/secrets/bot_token:ro
+      - ./secrets/data_key:/run/secrets/data_key:ro
+      - ./secrets/internal_token:/run/secrets/internal_token:ro
+      - ./config:/run/config:ro
+    networks:
+      - assistant_internal
+      - assistant_management
+    restart: unless-stopped
+    mem_limit: 2g
+    cpus: 1.50
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  server-agent:
+    build: ./source
+    image: personal-telegram-assistant:openai-only-20261114
+    command: ["python", "-m", "app.server_agent.main"]
+    init: true
+    user: "10001:10001"
+    read_only: true
+    cap_drop: ["ALL"]
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=16m,mode=1777
+    environment:
+      INTERNAL_TOKEN_FILE: /run/secrets/internal_token
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN:-}
+      SERVER_ALLOWED_PROJECTS: ${SERVER_ALLOWED_PROJECTS:-personal-telegram-assistant-egskdk}
+      DOCKER_PROXY_URL: http://docker-api-proxy:8091
+      TZ: ${TZ:-Asia/Tashkent}
+    volumes:
+      - /proc/stat:/host/proc/stat:ro
+      - /proc/meminfo:/host/proc/meminfo:ro
+      - /proc/loadavg:/host/proc/loadavg:ro
+      - /proc/net/dev:/host/proc/net/dev:ro
+      - /:/host/root:ro,rslave
+      - /mnt/storage:/host/storage:ro
+      - ./secrets/internal_token:/run/secrets/internal_token:ro
+    networks:
+      - assistant_management
+      - assistant_docker_api
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: 0.25
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  docker-api-proxy:
+    build: ./source
+    image: personal-telegram-assistant:openai-only-20261114
+    command: ["python", "-m", "app.server_agent.docker_proxy"]
+    init: true
+    user: "10001:10001"
+    group_add: ["${DOCKER_SOCKET_GID:-983}"]
+    read_only: true
+    cap_drop: ["ALL"]
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=16m,mode=1777
+    environment:
+      INTERNAL_TOKEN_FILE: /run/secrets/internal_token
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN:-}
+      DOCKER_ALLOWED_PROJECTS: ${SERVER_ALLOWED_PROJECTS:-personal-telegram-assistant-egskdk}
+      TZ: ${TZ:-Asia/Tashkent}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./secrets/internal_token:/run/secrets/internal_token:ro
+    networks:
+      - assistant_docker_api
+    restart: unless-stopped
+    mem_limit: 128m
+    cpus: 0.20
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8091/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  executor:
+    build: ./source
+    image: personal-telegram-assistant:openai-only-20261114
+    command: ["python", "-m", "app.executor.main"]
+    init: true
+    user: "10001:10001"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=32m,mode=1777
+    environment:
+      ENABLE_PROFILE_EXECUTOR: ${ENABLE_PROFILE_EXECUTOR:-0}
+      ENABLE_PROFILE_READER: ${ENABLE_PROFILE_READER:-0}
+      ENABLE_OPENAI: '1'
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ENABLE_TTS: '1'
+      OPENAI_TTS_MODEL: gpt-realtime-2.1-mini
+      OPENAI_TTS_VOICE: marin
+      OWNER_TELEGRAM_ID: ${OWNER_TELEGRAM_ID:-}
+      EXPECTED_PROFILE_ID: ${EXPECTED_PROFILE_ID:-}
+      TG_API_ID: ${TG_API_ID:-}
+      TG_API_HASH_FILE: /run/secrets/tg_api_hash
+      TG_SESSION_FILE: /var/lib/assistant-profile/profile.session.enc
+      DATA_KEY_FILE: /run/secrets/data_key
+      INTERNAL_TOKEN_FILE: /run/secrets/internal_token
+      CONTACTS_FILE: /run/config/contacts.enc
+      PROFILE_API_BASE: http://bot:8080
+      PROFILE_MANAGEMENT_API_BASE: http://executor:8081
+      PROFILE_POLL_SECONDS: ${PROFILE_POLL_SECONDS:-2}
+      PROFILE_LEASE_SECONDS: ${PROFILE_LEASE_SECONDS:-30}
+      TZ: ${TZ:-Asia/Tashkent}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - profile_state:/var/lib/assistant-profile
+      - ./secrets/data_key:/run/secrets/data_key:ro
+      - ./secrets/internal_token:/run/secrets/internal_token:ro
+      - ./secrets/tg_api_hash:/run/secrets/tg_api_hash:ro
+      - ./config:/run/config:ro
+    networks:
+      - assistant_internal
+    restart: unless-stopped
+    mem_limit: 768m
+    cpus: 0.50
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8081/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  assistant_data:
+  profile_state:
+
+networks:
+  assistant_internal:
+    driver: bridge
+  assistant_management:
+    driver: bridge
+    internal: true
+  assistant_docker_api:
+    driver: bridge
+    internal: true
+

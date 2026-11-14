@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101923">
+  <title>Saida — jonli suhbat</title>
+  <link rel="stylesheet" href="/voice/app.css">
+  <script src="https://telegram.org/js/telegram-web-app.js?65"></script>
+  <script src="/voice/app.js" defer></script>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="mark" aria-hidden="true">S</div>
+      <div>
+        <h1>Saida bilan suhbat</h1>
+        <p id="status" role="status" aria-live="polite">Ulanishga tayyor</p>
+      </div>
+    </header>
+
+    <section class="notice">
+      Ovozingiz serverda matnga aylantiriladi va Saida javobni o‘sha yerda ovozlaydi.
+      Javob matnini botda tanlangan model tayyorlaydi. Maxfiylik sozlamalari botning /privacy bo‘limida.
+      Suhbat matni shifrlangan xotirada saqlanadi. Gapni tugatgach Saida javob beradi.
+    </section>
+
+    <section class="controls" aria-label="Suhbat boshqaruvi">
+      <button id="start" class="primary">Suhbatni boshlash</button>
+      <button id="interrupt" disabled>Javobni to‘xtatish</button>
+      <button id="finish" class="finish" disabled>Suhbatni tugatish</button>
+      <button id="sendNow" disabled>Gapirdim</button>
+      <button id="playAgain" hidden>Javobni eshitish</button>
+      <button id="reconnect" hidden>Qayta ulanish</button>
+    </section>
+
+    <div class="timer-row"><span id="timer">30:00</span><span id="micState">Mikrofon o‘chiq</span></div>
+    <section id="transcript" class="transcript" aria-label="Suhbat matni" aria-live="polite">
+      <p class="empty">Suhbat boshlanganidan keyin gaplar shu yerda ko‘rinadi.</p>
+    </section>
+
+    <footer id="durationNote">Saida navbat bilan tinglaydi va javob beradi. Xabar yuborish tasdig‘i bot chatida ko‘rsatiladi.</footer>
+    <audio id="playback" autoplay playsinline></audio>
+  </main>
+</body>
+</html>
